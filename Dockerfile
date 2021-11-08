@@ -1,4 +1,4 @@
-FROM rstudio/r-session-complete:bionic-2021.09.0-351.pro6
+FROM rstudio/r-session-complete-preview:bionic-2022.01.1-daily-189.pro1
 
 # install module
 #RUN set -x \
