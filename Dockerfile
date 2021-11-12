@@ -1,15 +1,25 @@
-FROM rstudio/r-session-complete-preview:bionic-2022.01.1-daily-189.pro1
+FROM rstudio/r-session-complete-preview:bionic-2022.01.0-daily-192.pro1
 
 # install module
-#RUN set -x \
-#    && apt-get update \
-#    && apt-get install -y environment-modules
+RUN set -x \
+    && apt-get update \
+    && apt-get install -y tcl \
+    && apt-get install -y environment-modules \
+    && . /etc/profile
 
-ARG R_VERSION_ALT=4.1.0
+WORKDIR /custom 
+ARG R_VERSION_ALT=4.0.2
 RUN apt-get update -qq && \
-    curl -O https://cdn.rstudio.com/r/ubuntu-1804/pkgs/r-${R_VERSION_ALT}_1_amd64.deb && \
-    DEBIAN_FRONTEND=noninteractive gdebi --non-interactive r-${R_VERSION_ALT}_1_amd64.deb && \
-    rm -f ./r-${R_VERSION_ALT}_1_amd64.deb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
+    curl -O https://cran.rstudio.com/src/base/R-4/R-${R_VERSION_ALT}.tar.gz && \
+    tar -xzvf R-${R_VERSION_ALT}.tar.gz && \
+    cd R-${R_VERSION_ALT} && \
+    ./configure \
+       --prefix=/custom/R/${R_VERSION_ALT} \
+       --with-readline=no \
+       --with-x=no \
+       --enable-memory-profiling \
+       --enable-R-shlib \
+       --with-blas \
+       --with-lapack && \
+    make && \
+    make install
