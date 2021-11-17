@@ -8,13 +8,14 @@ ARG MINICONDA_VERSION=py37_4.8.3
 ARG PYTHON_VERSION=3.9.5
 ARG DRIVERS_VERSION=1.8.0
 
-# Install dependencies --------------------------------------------------------#
+# Install RStudio Workbench session components -------------------------------#
+
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl \
     wget \
     gdebi \
-    libcurl4-openssl-dev \
+    libcurl4-gnutls-dev \
     libssl-dev \
     libuser \
     libuser1-dev \
@@ -22,55 +23,19 @@ RUN apt-get update -y && \
     rrdtool && \
     rm -rf /var/lib/apt/lists/*
 
-# Install R -------------------------------------------------------------------#
-
-RUN curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive gdebi --non-interactive r-${R_VERSION}_1_amd64.deb && \
-    rm -rf r-${R_VERSION}_1_amd64.deb && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R && \
-    ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
-
-# Install module and custom R --------------------------------------------------#
-RUN set -x \
-    && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y tcl \
-    environment-modules \
-    && . /etc/profile
-
-WORKDIR /custom
-ARG R_VERSION_ALT=4.0.2
-RUN apt-get update -qq && \
-    curl -O https://cran.rstudio.com/src/base/R-4/R-${R_VERSION_ALT}.tar.gz && \
-    tar -xzvf R-${R_VERSION_ALT}.tar.gz && \
-    cd R-${R_VERSION_ALT} && \
-    ./configure \
-       --prefix=/custom/R/${R_VERSION_ALT} \
-       --with-readline=no \
-       --with-x=no \
-       --enable-memory-profiling \
-       --enable-R-shlib \
-       --with-blas \
-       --with-lapack && \
-    make && \
-    make install
-
-# Install RStudio Workbench session components -------------------------------#
-
-ARG RSW_VERSION=2021.09.0+351.pro6
+ARG RSW_VERSION=2022.01.0-daily+208.pro7
 ARG RSW_NAME=rstudio-workbench
 ARG RSW_DOWNLOAD_URL=https://s3.amazonaws.com/rstudio-ide-build/server/bionic/amd64
 RUN apt-get update --fix-missing \
     && apt-get install -y gdebi-core \
-    && RSW_VERSION_URL=`echo -n "${RSW_VERSION}" | sed 's/+/%2B/g'` \
+    && RSW_VERSION_URL=`echo -n "${RSW_VERSION}" | sed 's/+/-/g'` \
     && curl -o rstudio-workbench.deb ${RSW_DOWNLOAD_URL}/${RSW_NAME}-${RSW_VERSION_URL}-amd64.deb \
     && gdebi --non-interactive rstudio-workbench.deb \
     && rm rstudio-workbench.deb \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/rstudio-server/r-versions
 
 EXPOSE 8788/tcp
 
@@ -80,13 +45,21 @@ RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
     libssl-dev \
-    libuser
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \ 
-    libxml2-dev 
-
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \ 
+    libuser \
+    libxml2-dev \
     subversion && \
     rm -rf /var/lib/apt/lists/*
+
+# Install R -------------------------------------------------------------------#
+
+RUN curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive gdebi --non-interactive r-${R_VERSION}_1_amd64.deb && \
+    rm -rf r-${R_VERSION}_1_amd64.deb && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R && \
+    ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 
 # Install Python --------------------------------------------------------------#
 
@@ -140,4 +113,3 @@ RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
-
