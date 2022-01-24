@@ -23,7 +23,7 @@ RUN apt-get update -y && \
     rrdtool && \
     rm -rf /var/lib/apt/lists/*
 
-ARG RSW_VERSION=2022.01.0-daily+208.pro7
+ARG RSW_VERSION=2022.02.0-preview+392.pro1
 ARG RSW_NAME=rstudio-workbench
 ARG RSW_DOWNLOAD_URL=https://s3.amazonaws.com/rstudio-ide-build/server/bionic/amd64
 RUN apt-get update --fix-missing \
